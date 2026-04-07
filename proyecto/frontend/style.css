@@ -1,0 +1,114 @@
+:root {
+  --bg0: #091217;
+  --bg1: #0f2830;
+  --panel: rgba(10, 20, 24, 0.85);
+  --ink: #d8f8ef;
+  --accent: #4ef0bc;
+  --warn: #ff5a5a;
+  --ok: #54d36b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: radial-gradient(circle at 20% 20%, #12343e, var(--bg0) 60%),
+              linear-gradient(140deg, var(--bg1), var(--bg0));
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.panel {
+  display: none;
+  background: var(--panel);
+  border: 1px solid rgba(78, 240, 188, 0.2);
+  border-radius: 14px;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.35s ease;
+}
+
+.panel.active {
+  display: block;
+}
+
+label,
+input,
+select,
+button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+}
+
+input,
+select,
+button {
+  border-radius: 10px;
+  border: 1px solid rgba(78, 240, 188, 0.35);
+  background: #0b1a1f;
+  color: var(--ink);
+  padding: 10px;
+}
+
+button {
+  cursor: pointer;
+  background: linear-gradient(90deg, #185f5f, #1d7868);
+  transition: transform 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+#rooms button {
+  margin-bottom: 8px;
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#game-canvas {
+  width: 100%;
+  max-width: 100%;
+  background: #0a0f12;
+  border-radius: 12px;
+  border: 1px solid rgba(78, 240, 188, 0.3);
+}
+
+.hint {
+  color: #95cdc1;
+}
+
+.alerts {
+  margin-top: 10px;
+  min-height: 24px;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .hud {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
