@@ -1,5 +1,6 @@
 #include "protocol.h"
 
+#include "../config.h"
 #include "../game/game.h"
 #include "../network/network.h"
 #include "../utils/logger.h"

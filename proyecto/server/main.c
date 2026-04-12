@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Uso: %s <puerto>\n", argv[0]);
+        fprintf(stderr, "Uso: %s <puerto> [archivo_logs]\n", argv[0]);
         return 1;
     }
 
@@ -18,7 +18,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    logger_init(LOG_FILE);
+    const char *log_file = LOG_FILE;
+    if (argc > 2) {
+        log_file = argv[2];
+    }
+
+    logger_init(log_file);
     game_init();
 
     int rc = network_start_server(port);

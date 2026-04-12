@@ -20,6 +20,8 @@
 static ClientConnection g_clients[MAX_PLAYERS];
 static pthread_mutex_t g_clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static int network_send_all(int socket, const void *data, size_t len);
+
 static int recv_line(int socket, char *out, size_t out_size) {
     size_t pos = 0;
     int truncated = 0;
