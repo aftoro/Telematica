@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 static ClientConnection g_clients[MAX_PLAYERS];
@@ -21,6 +22,7 @@ static pthread_mutex_t g_clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int recv_line(int socket, char *out, size_t out_size) {
     size_t pos = 0;
+    int truncated = 0;
     while (pos + 1 < out_size) {
         char c = '\0';
         ssize_t n = recv(socket, &c, 1, 0);
@@ -36,15 +38,39 @@ static int recv_line(int socket, char *out, size_t out_size) {
         out[pos++] = c;
     }
     out[pos] = '\0';
-    return (int)pos;
+
+    // If we filled the buffer without finding \n, drain the rest of the line
+    if (pos + 1 >= out_size) {
+        truncated = 1;
+        char drain[1];
+        while (recv(socket, drain, 1, 0) > 0) {
+            if (drain[0] == '\n') {
+                break;
+            }
+        }
+    }
+
+    return truncated ? -2 : (int)pos;
 }
 
 int network_send_to_socket(int socket, const char *line) {
     char buffer[BUFFER_SIZE];
     snprintf(buffer, sizeof(buffer), "%s\n", line);
     size_t len = strlen(buffer);
-    ssize_t sent = send(socket, buffer, len, 0);
-    return sent == (ssize_t)len ? 0 : -1;
+    return network_send_all(socket, buffer, len) == 0 ? 0 : -1;
+}
+
+static int network_send_all(int socket, const void *data, size_t len) {
+    const char *ptr = (const char *)data;
+    size_t sent = 0;
+    while (sent < len) {
+        ssize_t n = send(socket, ptr + sent, len - sent, 0);
+        if (n <= 0) {
+            return -1;
+        }
+        sent += (size_t)n;
+    }
+    return 0;
 }
 
 static void *client_thread(void *arg) {
@@ -64,7 +90,10 @@ static void *client_thread(void *arg) {
 
     while (1) {
         int n = recv_line(client->socket, msg, sizeof(msg));
-        if (n <= 0) {
+        if (n < 0) {
+            if (n == -2) {
+                logger_client(client->ip, client->port, "LINE_TOO_LONG");
+            }
             break;
         }
 
@@ -87,6 +116,16 @@ static void *client_thread(void *arg) {
     pthread_mutex_unlock(&g_clients_mutex);
 
     logger_server("Cliente desconectado");
+
+    // Log active connections metric
+    int active_count = 0;
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        if (g_clients[i].active) active_count++;
+    }
+    char metric[64];
+    snprintf(metric, sizeof(metric), "active_connections=%d", active_count);
+    logger_metrics(metric);
+
     return NULL;
 }
 
@@ -134,6 +173,13 @@ int network_start_server(int port) {
             continue;
         }
 
+        // Set socket timeouts
+        struct timeval tv;
+        tv.tv_sec = 30;  // 30 seconds timeout
+        tv.tv_usec = 0;
+        setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(client_socket, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
         pthread_mutex_lock(&g_clients_mutex);
         int slot = -1;
         for (int i = 0; i < MAX_PLAYERS; ++i) {
@@ -157,6 +203,15 @@ int network_start_server(int port) {
         char c_log[128];
         snprintf(c_log, sizeof(c_log), "Cliente conectado %s:%d", g_clients[slot].ip, g_clients[slot].port);
         logger_server(c_log);
+
+        // Log active connections metric
+        int active_count = 0;
+        for (int i = 0; i < MAX_PLAYERS; ++i) {
+            if (g_clients[i].active) active_count++;
+        }
+        char metric[64];
+        snprintf(metric, sizeof(metric), "active_connections=%d", active_count);
+        logger_metrics(metric);
 
         if (pthread_create(&g_clients[slot].thread, NULL, client_thread, &g_clients[slot]) != 0) {
             close(client_socket);

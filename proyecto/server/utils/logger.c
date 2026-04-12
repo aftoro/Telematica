@@ -57,3 +57,9 @@ void logger_client(const char *ip, int port, const char *message) {
     logger_write_locked(prefix, message);
     pthread_mutex_unlock(&g_log_mutex);
 }
+
+void logger_metrics(const char *message) {
+    pthread_mutex_lock(&g_log_mutex);
+    logger_write_locked("[METRICS]", message);
+    pthread_mutex_unlock(&g_log_mutex);
+}

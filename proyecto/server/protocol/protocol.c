@@ -19,7 +19,12 @@ static int parse_int(const char *text, int *value) {
 }
 
 int protocol_process_command(ClientConnection *client, const char *line, char *response, size_t response_size) {
-    char buffer[512];
+    if (strlen(line) > MAX_MESSAGE_LEN) {
+        snprintf(response, response_size, "ERROR MESSAGE_TOO_LONG");
+        return 0;
+    }
+
+    char buffer[MAX_MESSAGE_LEN + 1];
     strncpy(buffer, line, sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = '\0';
 
@@ -44,6 +49,7 @@ int protocol_process_command(ClientConnection *client, const char *line, char *r
         if (rc == 0) {
             snprintf(response, response_size, "OK ROLE");
         } else {
+            logger_metrics("error_command=ROLE");
             snprintf(response, response_size, "ERROR ROLE");
         }
         return 0;
@@ -146,7 +152,7 @@ int protocol_process_command(ClientConnection *client, const char *line, char *r
     if (strcmp(cmd, "STATUS") == 0) {
         int rc = game_status(client->player_id, response, response_size);
         if (rc != 0) {
-            snprintf(response, response_size, "ERROR STATUS");
+            snprintf(response, response_size, "ERROR PLAYER_NOT_FOUND");
         }
         return 0;
     }

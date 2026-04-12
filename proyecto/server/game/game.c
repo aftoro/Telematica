@@ -386,7 +386,7 @@ int game_status(int player_id, char *out, size_t out_size) {
 
     update_attack_windows_locked();
 
-    snprintf(out, out_size, "DATA STATUS PLAYERS ");
+    snprintf(out, out_size, "DATA STATUS V1 PLAYERS ");
     int wrote_players = 0;
     for (int i = 0; i < MAX_PLAYERS; ++i) {
         if (!g_players[i].active) {
