@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <netdb.h> 
 
 static int recv_line(int sock, char *out, size_t size) {
     size_t pos = 0;
@@ -41,17 +42,30 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    inet_pton(AF_INET, ip, &addr.sin_addr);
+ 
 
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("connect");
-        close(sock);
-        return 1;
-    }
+struct addrinfo hints, *res;
+memset(&hints, 0, sizeof(hints));
+hints.ai_family = AF_INET;
+hints.ai_socktype = SOCK_STREAM;
+
+char port_str[10];
+sprintf(port_str, "%d", port);
+
+if (getaddrinfo(ip, port_str, &hints, &res) != 0) {
+    perror("getaddrinfo");
+    close(sock);
+    return 1;
+}
+
+if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+    perror("connect");
+    freeaddrinfo(res);
+    close(sock);
+    return 1;
+}
+
+freeaddrinfo(res);
 
     char line[512];
     if (recv_line(sock, line, sizeof(line)) > 0) {

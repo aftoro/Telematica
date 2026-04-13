@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #define HTTP_BUFFER 8192
 #define MAX_SESSIONS 64
@@ -246,24 +247,29 @@ static int connect_backend(const char *host, int port) {
     if (sock < 0) {
         return -1;
     }
-
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, host, &addr.sin_addr) <= 0) {
-        close(sock);
-        return -1;
-    }
-
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        close(sock);
-        return -1;
-    }
-
-    return sock;
 }
+
+struct addrinfo hints, *res;
+
+memset(&hints, 0, sizeof(hints));
+hints.ai_family = AF_INET;
+hints.ai_socktype = SOCK_STREAM;
+
+char port_str[10];
+sprintf(port_str, "%d", port);
+
+if (getaddrinfo(host, port_str, &hints, &res) != 0) {
+    close(sock);
+    return -1;
+}
+
+if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+    freeaddrinfo(res);
+    close(sock);
+    return -1;
+}
+
+freeaddrinfo(res);  
 
 static void handle_api(int client, const char *path, const char *query) {
     if (strcmp(path, "/api/lobby") == 0) {
