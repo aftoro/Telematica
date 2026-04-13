@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cyber Arena</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="screen-login" class="panel active">
+      <h1>Cyber Arena</h1>
+      <p>Simulador multijugador de ciberseguridad</p>
+      <label>Nombre</label>
+      <input id="name-input" placeholder="tu_nombre" maxlength="20" />
+      <label>Rol</label>
+      <select id="role-select">
+        <option value="ATACANTE">ATACANTE</option>
+        <option value="DEFENSOR">DEFENSOR</option>
+      </select>
+      <button id="join-btn">Unirse</button>
+      <p id="login-msg" class="hint"></p>
+    </section>
+
+    <section id="screen-lobby" class="panel">
+      <h2>Lobby</h2>
+      <p>Selecciona una sala</p>
+      <div id="rooms"></div>
+      <button id="refresh-rooms">Actualizar</button>
+      <p id="lobby-msg" class="hint"></p>
+    </section>
+
+    <section id="screen-game" class="panel">
+      <div class="hud">
+        <div>
+          <strong id="player-label"></strong>
+          <span id="status-line"></span>
+        </div>
+        <div>
+          <button id="scan-btn">SCAN</button>
+          <button id="status-btn">STATUS</button>
+        </div>
+      </div>
+      <p id="action-line" class="hint"></p>
+      <canvas id="game-canvas" width="800" height="500"></canvas>
+      <p class="hint">Mover: WASD/Flechas | ATACANTE: tecla E para ATTACK | DEFENSOR: tecla Q para MITIGATE</p>
+      <div id="alerts" class="alerts"></div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
